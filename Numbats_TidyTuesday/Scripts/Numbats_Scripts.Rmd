@@ -1,0 +1,82 @@
+---
+title: "Australia Numbats"
+author: "Helia Tehrani"
+date: "2023-03-11"
+output: 
+  prettydoc::html_pretty:
+    theme: tactile
+    toc: TRUE
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.path = "../Output/")
+```                     
+ 
+ ## Introduction
+ Welcome to Tidy Tuesday for this week. I will be working with numbat data that was gathered in Australia this week. Because they are so adorable, despite being an endangered species, people are enamored with them. I'm trying to respond to the following queries:
+ .Where in Australia can you locate numbats?
+ .– Which season is more common, summer or winter?
+ ![Numbat Pic](https://th.bing.com/th/id/OIP.vJlALNXB1o8urBaTxWkojAHaE7?pid=ImgDet&rs=1)
+ 
+ ## Libraries
+```{r Libraries}
+library(ggmap)
+library(tidyverse)
+library(here)
+library(ggsn)
+library(emojifont)
+library(readr)
+library(nationalparkcolors)
+library(praise)
+library(devtools)
+library(beyonce)
+library(ggthemes)
+library(hrbrthemes)
+library(ggridges)
+library(nationalparkcolors)
+library(tidytuesdayR)
+library(ggplot2)
+library(viridis)
+library(lubridate)
+```
+ # Data
+The data can be manually entered using the code.
+```{r}
+numbats <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-03-07/numbats.csv')
+```
+#To display a map of Australia and the locations of the numerous Numbat sightings, I utilized the code below from Google Maps. The map demonstrates that there have been numerous sightings in southwest Australia.
+```{r Numbat Map}
+Australia <- get_map("Australia", zoom = 6, maptype = "terrain") #satellite map of australia
+ggmap(Australia) + #creat map
+  geom_point(data = numbats, #uses data for points
+             aes(x = decimalLongitude, #uses longitude from numbat data
+                 y = decimalLatitude)) #uses latitude from numbat data
+```
+#I plotted sightings on the maps using the raw data. Let's now purge the data so we can respond to the second question.
+```{r Sightings in Different Seasons}
+clean_numbats <- numbats %>% #numbats data
+  drop_na(month) %>% #drop na's
+  select(decimalLatitude, decimalLongitude, month, eventDate) %>% #The columns I want to use
+  mutate(Month = month(eventDate), #extract month out of UTC column
+         season  = case_when( # make a season
+           Month %in% c(12,1,2) ~ "winter",
+           Month %in% c(3,4,5) ~ "spring",
+           Month %in% c(6,7,8) ~ "summer",
+           Month %in% c(9,10,11) ~ "fall"),
+         season = factor(season), #make season a factor
+         season = fct_relevel(season, c("winter","spring","summer","fall"))) #arrange as seasons fall through the year
+ggplot(clean_numbats,
+       aes(x = Month,
+           y = season,
+           fill = season))+
+  geom_density_ridges(alpha = 0.8)+ #ridges plot
+  theme_ridges()+
+  theme(legend.position = "none")+ #deletes legend 
+  labs(y = "Season",
+       title = "Number of Sightings of Numbats per Season")
+       
+```       
