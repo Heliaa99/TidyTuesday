@@ -1,0 +1,106 @@
+---
+title: "Soccer Game Info"
+author: "Helia Tehrani"
+date: "2023-04-12"
+output: 
+  prettydoc::html_pretty:
+    theme: tactile
+    toc: TRUE
+---
+ 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.path = "../Output/")
+```                  
+ 
+#Intro:
+*soccer dataset that examines various teams' victories and losses is part of this week's tidy tuesday. I want to use some new software I've learned to try to produce some amusing graphs using this random dataset. In order to become more accustomed to these fundamentals of coding, I also want to practice tidying data with mutate, select, and if else.*
+    
+## Load libraries 
+```{r}
+library(tidyverse)
+library(here)
+library(magick)
+library(PNWColors)
+library(patchwork)
+library(GGally)
+library(viridis)
+library(pals)
+```
+## Read Data 
+```{r }
+soccer <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-04-04/soccer21-22.csv')
+```
+
+
+```{r}
+halftime <- table(soccer$HTR, exclude = NULL) ## Ir's in R base
+prop.table(table(soccer$HTR, exclude = NULL)) ## demonstrates the percentage of datasets where each category is present. 
+fulltime <- table(soccer$FTR, exclude=NULL)
+fulltime
+soccer_home <- soccer %>%
+  group_by(HomeTeam) %>% 
+  summarize(sum_homegoals=sum(FTHG), 
+            sum_shots=sum(HS)) 
+soccer_away <- soccer %>% 
+  group_by(AwayTeam) %>% 
+  summarize(sum_awaygoals=sum(FTAG), 
+            sum_shots=sum(AS))
+```
+
+## Plot the Data 
+The first figure will show the number of shots taken as a function of total shots from full-time scores.
+
+```{r, goals_and_shots}
+ggplot(data=soccer_home, 
+       aes(x=sum_homegoals, 
+           y=sum_shots)) + 
+  geom_point() + 
+  labs(x="Total Goals from the Winning Games", 
+       y="Total Shots Taken", 
+       title="Goals Scored vs Goals on Goals for Home Teams") + 
+  theme_classic() +
+  theme(plot.title=element_text(hjust = 0.5)) 
+  
+ggsave(here("soccer Game Info", "Outputs", "goals_shots.jpg"), 
+       width=10, height=8)
+```
+
+## Plotting the fouls 
+In order to determine whether a team is more aggressive when playing at home or away, this plot will show the red cards awarded to each team both at home and away.
+
+```{r, redcardsplot}
+p1 <- ggplot(data=soccer, 
+       aes(y=HomeTeam, 
+           x=HR, 
+           fill=HomeTeam)) + 
+  geom_col() + 
+  theme_bw() + 
+  labs(x="The Red Cards of the Home Team", 
+       y="Home Team", 
+       title="Number of Red Cards per Home Team", 
+       fill="Home Team") + 
+  theme(plot.title=element_text(hjust = 0.6)) 
+p1
+p2 <- ggplot(data=soccer,
+       aes(x=AR, 
+           y=AwayTeam, 
+           fill=AwayTeam)) + 
+  geom_col() + 
+  theme_bw() + 
+  labs(x="Away Team Red Cards", 
+       y="Away Team", 
+       title="Number of Red Cards per Away Team", 
+       fill="Away Team") + 
+  theme(plot.title=element_text(hjust = 0.5)) 
+p2
+p1 + p2  
+  ggsave(here("Soccer Game Info", "Outputs", "redcards.jpg"), 
+         width=9, height=6)
+```
+#Conclusion
+*On tidy Tuesday, I looked into the soccer data collection, which contained a wealth of data on soccer games, who won, shots on goal, halftime and final scores, and fouls.
+Because that "H" and "A" were characters rather than numeric variables, I was unable to determine how to tally up the total number of victories on each occasion when they competed as home team vs. away team.
+Even so, I'm glad I had the opportunity to practice organizing dataframes, adding new columns, and learning more about patchwork.
