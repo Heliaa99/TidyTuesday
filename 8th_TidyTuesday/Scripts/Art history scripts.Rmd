@@ -1,0 +1,62 @@
+---
+title: "Art History"
+author: "Helia Tehrani"
+date: "2023-04-28"
+output: 
+  prettydoc::html_pretty:
+    theme: tactile
+    toc: TRUE
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.path = "../Output/")
+```
+
+## Loading the Libraries
+```{r}
+library(tidyverse)
+library(here)
+library(colorspace)
+library(ggplot2)
+library(tidytuesdayR)
+```
+
+
+### Load data ######
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2023-01-17')
+arthistory <- tuesdata$artists
+View(arthistory) 
+glimpse(arthistory) 
+```
+
+## Data Analysis ##
+```{r, Plot}
+book <- arthistory %>%
+  ggplot(aes(x = year,
+             group = book,
+             fill = book)) +
+  geom_density(adjust = 1.5,
+               show.legend = FALSE) +
+  labs(x = "Year",
+       y = "Density",
+       title = "The total number of Artist Publications in Two Major Art History") +
+  facet_wrap(~book) +
+  scale_fill_brewer(palette = "Set2") + 
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = .5,color = "red" ), # Centers plot title
+        plot.background = element_rect(color = "purple", fill = "black"),
+        plot.caption = element_text(size = 8, color = "red", hjust = 0.5),
+        axis.text = element_text(size=12,color = "white" ), 
+        axis.title = element_text(size=14 ,color = "white"), 
+        panel.background = element_blank(), 
+        legend.position = "bottom") # Moves legend to bottom of plot
+book 
+
+ggsave(here("8th_TidyTuesday","Output","ArtHistoryPlot.png"), #saves ggplot
+       width = 20, height = 10)
+```
