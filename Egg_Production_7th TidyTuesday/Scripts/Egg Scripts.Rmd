@@ -1,0 +1,79 @@
+---
+title: "Egg_Production_7th TidyTuesday"
+author: "Helia Tehrani"
+date: "2023-04-25"
+output:
+  rmarkdown::html_document:
+    theme: lumen
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.path = "../Output/")
+```
+
+#Intro
+A data collection that records cage-free egg production in the US from July 2016 through February 2021 will be the topic of this week's Tidy Tuesday. The United States Department of Agriculture (USDA) gathered the information. This information is only a portion of the total amount that the USDA has gathered, which covers the period from December 2007 to the present.
+
+# Libraries
+```{r Libraries}
+library(tidyverse)
+library(here)
+library(RColorBrewer)
+library(RCurl)
+library(ggthemes)
+library(ggsci)
+library(patchwork)
+```
+
+# Read in Data
+```{r, Read in Data}
+eggproduction  <- read_csv(getURL("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-04-11/egg-production.csv"))
+cagefreepercentages <- read_csv(getURL("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-04-11/cage-free-percentages.csv"))
+```
+
+# Data Wrangling
+```{r, Data Wrangling}
+eggproduction_clean <- eggproduction %>%
+  select(observed_month, prod_type, prod_process, n_eggs) %>%
+  mutate(year = year(observed_month),
+         month = month(observed_month)) %>%
+  filter(year %in% c(2016, 2017,2018, 2019))
+eggproduction_clean$egg_type_process<-paste(eggproduction_clean$prod_type, eggproduction_clean$prod_process, sep="_")
+eggproduction_clean$year_month<-paste(eggproduction_clean$year, eggproduction_clean$month, sep="_")
+```
+
+# Plot
+```{r, Plot}
+egg_type_labs <- list(
+ 'hatching eggs_all'="Hatching Eggs",
+ 'table eggs_all'="Table Eggs (All)",
+ 'table eggs_cage-free (non-organic)'="Table Eggs (Non-Organic)",
+ 'table eggs_cage-free (organic)'="Table Eggs (Organic)"
+)
+egg_labeller <- function(variable,value){
+    return(egg_type_labs[value])
+}
+
+eggproduction_clean %>%
+ group_by(year, egg_type_process) %>%
+ summarise(average_eggs_produced = mean(n_eggs)) %>%
+ ggplot(aes(x = year,
+            y= average_eggs_produced,
+            fill = egg_type_process))+
+ geom_col(color = "darkmagenta", size = 0.5)+
+ facet_wrap(~egg_type_process,
+            labeller=egg_labeller)+
+ theme_classic()+
+ scale_fill_manual(values = c("#33a02c", "#b2df8a", "#1f78b4", "#a6cee3")) +
+ guides(fill = FALSE)+
+ labs(title = "Average Annual Egg Production by Type (2016-2019)",
+         x = "Year",
+      y = "Total Annual Egg Production (in Billions)")+
+ scale_y_continuous(breaks=c(2000000000, 4000000000, 6000000000, 8000000000),
+                     labels=c('2B', '4B', '6B', '8B'))
+```
+
+
